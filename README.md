@@ -1,3 +1,6 @@
+## FORK INTRUDUCTION
+This fork is a rebase of bylaws's fork, Readme was also updated for ARM64EC instruction instead of the default.
+
 ## INTRODUCTION
 
 Wine is a program which allows running Microsoft Windows programs
@@ -10,28 +13,10 @@ be used for porting Windows code into native Unix executables.
 Wine is free software, released under the GNU LGPL; see the file
 LICENSE for the details.
 
-
+ 
 ## QUICK START
 
-From the top-level directory of the Wine source (which contains this file),
-run:
-
-```
-./configure
-make
-```
-
-Then either install Wine:
-
-```
-make install
-```
-
-Or run Wine directly from the build directory:
-
-```
-./wine notepad
-```
+For compile instructions, keep reading.
 
 Run programs as `wine program`. For more information and problem
 resolution, read the rest of this file, the Wine man page, and
@@ -43,33 +28,11 @@ especially the wealth of information found at https://www.winehq.org.
 To compile and run Wine, you must have one of the following:
 
 - Linux version 2.6.22 or later
-- FreeBSD 12.4 or later
-- Solaris x86 9 or later
-- NetBSD-current
-- macOS 10.12 or later
+- ARM64EC Host
 
 As Wine requires kernel-level thread support to run, only the operating
 systems mentioned above are supported.  Other operating systems which
 support kernel threads may be supported in the future.
-
-**FreeBSD info**:
-  See https://wiki.freebsd.org/Wine for more information.
-
-**Solaris info**:
-  You will most likely need to build Wine with the GNU toolchain
-  (gcc, gas, etc.). Warning : installing gas does *not* ensure that it
-  will be used by gcc. Recompiling gcc after installing gas or
-  symlinking cc, as and ld to the gnu tools is said to be necessary.
-
-**NetBSD info**:
-  Make sure you have the USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG options
-  turned on in your kernel.
-
-**macOS info**:
-  You need Xcode/Xcode Command Line Tools or Apple cctools.  The
-  minimum requirements for compiling Wine are clang 3.8 with the
-  MacOSX10.13.sdk and mingw-w64 v12 for 32-bit wine.  The
-  MacOSX10.14.sdk and later can build 64-bit wine.
 
 **Supported file systems**:
   Wine should run on most file systems. A few compatibility problems
@@ -93,13 +56,19 @@ support kernel threads may be supported in the future.
 
 ## COMPILATION
 
-To build Wine, do:
-
+### Toolchain
+Scripts and instructions to build an ARM64EC toolchain can be found at [here](https://github.com/bylaws/llvm-mingw), with prebuilt binaries for ARM64/x86 hosts on the [releases page](https://github.com/bylaws/llvm-mingw/releases/tag/20240929). Once built/downloaded, add it to your environment with 
+ ```export PATH="<path to toolchain>/bin:$PATH"```
+note the toolchain must come before all other path entries as it needs to override the host ar binary.
+* Make sure to grab the tar.gz aarch64 files when compiling on Linux. The zip files are for a Windows toolchain which doesn't work for these instructions.
+### Wine
+[https://gitlab.winehq.org/wine/wine Upstream] wine has various things missing for full FEX/ARM64EC support, while it can be used, **this fork** will give the best results for now. Make sure to install the deps listed [here](https://salsa.debian.org/wine-team/wine/-/blob/debian/9.0_repack-4/debian/control.in?ref_type=tags#L13) before building with the ARM64EC toolchain.
+```bash
+  ./configure --enable-archs=arm64ec,aarch64,i386 --prefix=/usr --with-mingw=clang --disable-tests
 ```
-./configure
-make
+```bash
+  make -j$(nproc)
 ```
-
 This will build the program "wine" and numerous support libraries/binaries.
 The program "wine" will load and run Windows executables.
 The library "libwine" ("Winelib") can be used to compile and link
@@ -107,12 +76,12 @@ Windows source code under Unix.
 
 To see compile configuration options, do `./configure --help`.
 
-For more information, see https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine
+For more information, see https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine (this readme but not tweaked for this repo which I'm keeping because it was already here), and https://wiki.fex-emu.com/index.php/Development:ARM64EC
 
 
 ## SETUP
 
-Once Wine has been built correctly, you can do `make install`; this
+Once Wine has been built correctly, you can do `  sudo --preserve-env=PATH make install -j$(nproc)`; this
 will install the wine executable and libraries, the Wine man page, and
 other needed files.
 
