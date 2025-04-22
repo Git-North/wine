@@ -5,10 +5,15 @@ IMPORTS   = $(MUSL_PE_LIBS) ntdll
 DELAYIMPORTS = advapi32 user32
 PARENTSRC = ../msvcrt
 
-C_SRCS = \
+SOURCES = \
 	concurrency.c \
 	console.c \
 	cpp.c \
+	crt_gccmain.c \
+	crt_main.c \
+	crt_winmain.c \
+	crt_wmain.c \
+	crt_wwinmain.c \
 	ctype.c \
 	data.c \
 	dir.c \
@@ -17,6 +22,7 @@ C_SRCS = \
 	except.c \
 	except_arm.c \
 	except_arm64.c \
+	except_arm64ec.c \
 	except_i386.c \
 	except_x86_64.c \
 	exception_ptr.c \
@@ -33,6 +39,7 @@ C_SRCS = \
 	misc.c \
 	onexit.c \
 	process.c \
+	rsrc.rc \
 	scanf.c \
 	sincos.c \
 	string.c \
@@ -40,5 +47,3 @@ C_SRCS = \
 	time.c \
 	undname.c \
 	wcs.c
-
-RC_SRCS = rsrc.rc

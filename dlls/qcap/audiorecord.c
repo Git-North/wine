@@ -602,14 +602,15 @@ static DWORD WINAPI stream_thread(void *arg)
             IMediaSample_SetTime(sample, &start_pts, &end_pts);
 
             TRACE("Sending buffer %p.\n", sample);
-            hr = IMemInputPin_Receive(filter->source.pMemInputPin, sample);
-            IMediaSample_Release(sample);
-            if (FAILED(hr))
+            if (FAILED(hr = IMemInputPin_Receive(filter->source.pMemInputPin, sample)))
             {
                 ERR("IMemInputPin::Receive() returned %#lx.\n", hr);
+                IMediaSample_Release(sample);
                 break;
             }
         }
+
+        IMediaSample_Release(sample);
     }
 
     LeaveCriticalSection(&filter->state_cs);
@@ -823,7 +824,7 @@ HRESULT audio_record_create(IUnknown *outer, IUnknown **out)
 
     object->state = State_Stopped;
     InitializeConditionVariable(&object->state_cv);
-    InitializeCriticalSection(&object->state_cs);
+    InitializeCriticalSectionEx(&object->state_cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     object->state_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": audio_record.state_cs");
 
     TRACE("Created audio recorder %p.\n", object);

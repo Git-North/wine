@@ -332,6 +332,7 @@
 @ stdcall SHAddToRecentDocs (long ptr)
 @ stdcall SHAppBarMessage(long ptr)
 @ stdcall SHAssocEnumHandlers(wstr long ptr)
+@ stdcall SHAssocEnumHandlersForProtocolByApplication(wstr ptr ptr)
 @ stdcall SHBindToFolderIDListParent(ptr ptr ptr ptr ptr)
 @ stdcall SHBindToObject(ptr ptr ptr ptr ptr)
 @ stdcall SHBindToParent(ptr ptr ptr ptr)
@@ -349,6 +350,7 @@
 @ stdcall SHCreateItemFromParsingName(wstr ptr ptr ptr)
 @ stdcall SHCreateItemInKnownFolder(ptr long wstr ptr ptr)
 @ stdcall SHCreateItemFromRelativeName(ptr wstr ptr ptr ptr)
+@ stdcall SHCreateItemWithParent(ptr ptr ptr ptr ptr)
 @ stub SHCreateProcessAsUserW
 @ stdcall SHCreateQueryCancelAutoPlayMoniker(ptr)
 @ stdcall SHCreateShellItem(ptr ptr ptr ptr)
@@ -424,6 +426,7 @@
 @ stdcall SHQueryUserNotificationState(ptr)
 @ stdcall SHRemoveLocalizedName(wstr)
 @ stdcall SHSetLocalizedName(wstr wstr long)
+@ stdcall SHSetTemporaryPropertyForItem(ptr ptr ptr)
 @ stdcall SHSetUnreadMailCountW(wstr long wstr)
 @ stdcall SHUpdateRecycleBinIcon()
 @ stdcall SheChangeDirA(str)

@@ -119,15 +119,8 @@ static void test_lsa(void)
                 LPSTR name = NULL;
                 LPSTR domain = NULL;
                 LPSTR forest = NULL;
-                LPSTR guidstr = NULL;
-                WCHAR guidstrW[64];
                 UINT len;
-                guidstrW[0] = '\0';
                 ConvertSidToStringSidA(dns_domain_info->Sid, &strsid);
-                StringFromGUID2(&dns_domain_info->DomainGuid, guidstrW, ARRAY_SIZE(guidstrW));
-                len = WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, NULL, 0, NULL, NULL );
-                guidstr = LocalAlloc( 0, len );
-                WideCharToMultiByte( CP_ACP, 0, guidstrW, -1, guidstr, len, NULL, NULL );
                 if (dns_domain_info->Name.Buffer) {
                     len = WideCharToMultiByte( CP_ACP, 0, dns_domain_info->Name.Buffer, -1, NULL, 0, NULL, NULL );
                     name = LocalAlloc( 0, len );
@@ -144,12 +137,11 @@ static void test_lsa(void)
                     WideCharToMultiByte( CP_ACP, 0, dns_domain_info->DnsForestName.Buffer, -1, forest, len, NULL, NULL );
                 }
                 trace("  name: %s domain: %s forest: %s guid: %s sid: %s\n",
-                      name ? name : "NULL", domain ? domain : "NULL",
-                      forest ? forest : "NULL", guidstr, strsid ? strsid : "NULL");
+                      debugstr_a(name), debugstr_a(domain), debugstr_a(forest),
+                      debugstr_guid(&dns_domain_info->DomainGuid), debugstr_a(strsid));
                 LocalFree( name );
                 LocalFree( forest );
                 LocalFree( domain );
-                LocalFree( guidstr );
                 LocalFree( strsid );
             }
             else
@@ -221,8 +213,10 @@ static void test_LsaLookupNames2(void)
     LSA_OBJECT_ATTRIBUTES attrs;
     PLSA_REFERENCED_DOMAIN_LIST domains;
     PLSA_TRANSLATED_SID2 sids;
-    LSA_UNICODE_STRING name[3];
+    LSA_UNICODE_STRING name[4];
     LPSTR account, sid_dom;
+    DWORD len = 0;
+    BOOL ret;
 
     if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
         (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
@@ -251,17 +245,25 @@ static void test_LsaLookupNames2(void)
         return;
     }
 
-    name[0].Buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(n1));
+    name[0].Buffer = malloc(sizeof(n1));
     name[0].Length = name[0].MaximumLength = sizeof(n1);
     memcpy(name[0].Buffer, n1, sizeof(n1));
 
-    name[1].Buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(n1));
+    name[1].Buffer = malloc(sizeof(n1));
     name[1].Length = name[1].MaximumLength = sizeof(n1) - sizeof(WCHAR);
     memcpy(name[1].Buffer, n1, sizeof(n1) - sizeof(WCHAR));
 
-    name[2].Buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(n2));
+    name[2].Buffer = malloc(sizeof(n2));
     name[2].Length = name[2].MaximumLength = sizeof(n2);
     memcpy(name[2].Buffer, n2, sizeof(n2));
+
+    ret = GetUserNameW(NULL, &len);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+            "GetUserNameW returned %x (%lu)\n", ret, GetLastError());
+    name[3].Buffer = malloc(len * sizeof(WCHAR));
+    name[3].Length = name[3].MaximumLength = (len - 1) * sizeof(WCHAR);
+    ret = GetUserNameW(name[3].Buffer, &len);
+    ok(ret, "GetUserNameW returned %x (%lu)\n", ret, GetLastError());
 
     /* account name only */
     sids = NULL;
@@ -315,9 +317,23 @@ static void test_LsaLookupNames2(void)
     LsaFreeMemory(sids);
     LsaFreeMemory(domains);
 
-    HeapFree(GetProcessHeap(), 0, name[0].Buffer);
-    HeapFree(GetProcessHeap(), 0, name[1].Buffer);
-    HeapFree(GetProcessHeap(), 0, name[2].Buffer);
+    /* case mismatch */
+    name[3].Buffer[0] = iswlower(name[3].Buffer[0]) ?
+        towupper(name[3].Buffer[0]) : tolower(name[3].Buffer[0]);
+    sids = NULL;
+    domains = NULL;
+    status = LsaLookupNames2(handle, 0, 1, &name[3], &domains, &sids);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %lx)\n", status);
+    ok(sids[0].Use == SidTypeUser, "expected SidTypeUser, got %u\n", sids[0].Use);
+    ok(sids[0].Flags == 0, "expected 0, got 0x%08lx\n", sids[0].Flags);
+    ok(domains->Entries == 1, "expected 1, got %lu\n", domains->Entries);
+    LsaFreeMemory(sids);
+    LsaFreeMemory(domains);
+
+    free(name[0].Buffer);
+    free(name[1].Buffer);
+    free(name[2].Buffer);
+    free(name[3].Buffer);
 
     status = LsaClose(handle);
     ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08lx\n", status);

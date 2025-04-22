@@ -26,17 +26,15 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "d3d9.h"
+#include "d3d9on12.h"
 #include "wine/wined3d.h"
 
 #define D3D9_MAX_VERTEX_SHADER_CONSTANTF 256
@@ -68,11 +66,12 @@ struct d3d9
     struct wined3d_output **wined3d_outputs;
     unsigned int wined3d_output_count;
     BOOL extended;
+    BOOL d3d9on12;
 };
 
 void d3d9_caps_from_wined3dcaps(const struct d3d9 *d3d9, unsigned int adapter_ordinal,
         D3DCAPS9 *caps, const struct wined3d_caps *wined3d_caps);
-BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended);
+BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended, BOOL d3d9on12);
 
 struct fvf_declaration
 {
@@ -90,6 +89,7 @@ enum d3d9_device_state
 struct d3d9_device
 {
     IDirect3DDevice9Ex IDirect3DDevice9Ex_iface;
+    IDirect3DDevice9On12 IDirect3DDevice9On12_iface;
     struct wined3d_device_parent device_parent;
     LONG refcount;
     struct wined3d_device *wined3d_device;
@@ -225,7 +225,6 @@ struct d3d9_texture
     struct list rtv_list;
     DWORD usage;
     BOOL flags;
-    struct wined3d_shader_resource_view *wined3d_srv;
     D3DTEXTUREFILTERTYPE autogen_filter_type;
 };
 

@@ -60,14 +60,24 @@ static const classinfo wic_classes[] = {
     {&CLSID_WICDdsDecoder, DdsDecoder_CreateInstance},
     {&CLSID_WICDdsEncoder, DdsEncoder_CreateInstance},
     {&CLSID_WICDefaultFormatConverter, FormatConverter_CreateInstance},
-    {&CLSID_WineTgaDecoder, TgaDecoder_CreateInstance},
     {&CLSID_WICUnknownMetadataReader, UnknownMetadataReader_CreateInstance},
+    {&CLSID_WICUnknownMetadataWriter, UnknownMetadataWriter_CreateInstance},
     {&CLSID_WICIfdMetadataReader, IfdMetadataReader_CreateInstance},
+    {&CLSID_WICIfdMetadataWriter, IfdMetadataWriter_CreateInstance},
+    {&CLSID_WICGpsMetadataReader, GpsMetadataReader_CreateInstance},
+    {&CLSID_WICGpsMetadataWriter, GpsMetadataWriter_CreateInstance},
+    {&CLSID_WICExifMetadataReader, ExifMetadataReader_CreateInstance},
+    {&CLSID_WICExifMetadataWriter, ExifMetadataWriter_CreateInstance},
+    {&CLSID_WICApp1MetadataReader, App1MetadataReader_CreateInstance},
+    {&CLSID_WICApp1MetadataWriter, App1MetadataWriter_CreateInstance},
+    {&CLSID_WICPngBkgdMetadataReader, PngBkgdReader_CreateInstance},
+    {&CLSID_WICPngBkgdMetadataWriter, PngBkgdWriter_CreateInstance},
     {&CLSID_WICPngChrmMetadataReader, PngChrmReader_CreateInstance},
     {&CLSID_WICPngGamaMetadataReader, PngGamaReader_CreateInstance},
     {&CLSID_WICPngHistMetadataReader, PngHistReader_CreateInstance},
     {&CLSID_WICPngTextMetadataReader, PngTextReader_CreateInstance},
     {&CLSID_WICPngTimeMetadataReader, PngTimeReader_CreateInstance},
+    {&CLSID_WICPngTimeMetadataWriter, PngTimeWriter_CreateInstance},
     {&CLSID_WICLSDMetadataReader, LSDReader_CreateInstance},
     {&CLSID_WICIMDMetadataReader, IMDReader_CreateInstance},
     {&CLSID_WICGCEMetadataReader, GCEReader_CreateInstance},
@@ -127,7 +137,7 @@ static ULONG WINAPI ClassFactoryImpl_Release(IClassFactory *iface)
     TRACE("(%p) refcount=%lu\n", iface, ref);
 
     if (ref == 0)
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
 
     return ref;
 }
@@ -165,7 +175,7 @@ static HRESULT ClassFactoryImpl_Constructor(const classinfo *info, REFIID riid, 
 
     *ppv = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(ClassFactoryImpl));
+    This = malloc(sizeof(ClassFactoryImpl));
     if (!This) return E_OUTOFMEMORY;
 
     This->IClassFactory_iface.lpVtbl = &ClassFactoryImpl_Vtbl;

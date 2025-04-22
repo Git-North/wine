@@ -126,10 +126,38 @@ fail:
 /*****************************************************
  * ADsBuildVarArrayInt     [ACTIVEDS.8]
  */
-HRESULT WINAPI ADsBuildVarArrayInt(LPDWORD lpdwObjectTypes, DWORD dwObjectTypes, VARIANT* pvar)
+HRESULT WINAPI ADsBuildVarArrayInt(LPDWORD values, DWORD count, VARIANT* var)
 {
-    FIXME("(%p, %ld, %p)!stub\n",lpdwObjectTypes, dwObjectTypes, pvar);
-    return E_NOTIMPL;
+    HRESULT hr;
+    SAFEARRAY *sa;
+    LONG idx, end = count;
+
+    TRACE("(%p, %lu, %p)\n", values, count, var);
+
+    if (!var) return E_ADS_BAD_PARAMETER;
+
+    sa = SafeArrayCreateVector(VT_VARIANT, 0, count);
+    if (!sa) return E_OUTOFMEMORY;
+
+    VariantInit(var);
+    for (idx = 0; idx < end; idx++)
+    {
+        VARIANT item;
+
+        V_VT(&item) = VT_I4;
+        V_UI4(&item) = values[idx];
+
+        hr = SafeArrayPutElement(sa, &idx, &item);
+        if (hr != S_OK)
+        {
+            SafeArrayDestroy(sa);
+            return hr;
+        }
+    }
+
+    V_VT(var) = VT_ARRAY | VT_VARIANT;
+    V_ARRAY(var) = sa;
+    return S_OK;
 }
 
 /*****************************************************
@@ -233,7 +261,7 @@ HRESULT WINAPI ADsGetLastError(LPDWORD perror, LPWSTR errorbuf, DWORD errorbufle
  */
 LPVOID WINAPI AllocADsMem(DWORD cb)
 {
-    return HeapAlloc(GetProcessHeap(), 0, cb);
+    return malloc(cb);
 }
 
 /*****************************************************
@@ -241,7 +269,8 @@ LPVOID WINAPI AllocADsMem(DWORD cb)
  */
 BOOL WINAPI FreeADsMem(LPVOID pMem)
 {
-    return HeapFree(GetProcessHeap(), 0, pMem);
+    free(pMem);
+    return TRUE;
 }
 
 /*****************************************************
@@ -249,7 +278,7 @@ BOOL WINAPI FreeADsMem(LPVOID pMem)
  */
 LPVOID WINAPI ReallocADsMem(LPVOID pOldMem, DWORD cbOld, DWORD cbNew)
 {
-    return HeapReAlloc(GetProcessHeap(), 0, pOldMem, cbNew);
+    return realloc(pOldMem, cbNew);
 }
 
 /*****************************************************
@@ -257,18 +286,8 @@ LPVOID WINAPI ReallocADsMem(LPVOID pOldMem, DWORD cbOld, DWORD cbNew)
  */
 LPWSTR WINAPI AllocADsStr(LPWSTR pStr)
 {
-    LPWSTR ret;
-    SIZE_T len;
-
     TRACE("(%p)\n", pStr);
-
-    if (!pStr) return NULL;
-
-    len = (wcslen(pStr) + 1) * sizeof(WCHAR);
-    ret = AllocADsMem(len);
-    if (ret) memcpy(ret, pStr, len);
-
-    return ret;
+    return wcsdup(pStr);
 }
 
 /*****************************************************

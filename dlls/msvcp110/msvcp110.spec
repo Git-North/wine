@@ -1331,7 +1331,7 @@
 @ thiscall -arch=i386 ?_Getmonths@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getmonths
 @ cdecl -arch=win64 ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getmonths
 @ cdecl -arch=arm ?_Getname@_Locinfo@std@@QBAPBDXZ(ptr) _Locinfo__Getname
-@ thiscall -arch=win32 ?_Getname@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getname
+@ thiscall -arch=i386 ?_Getname@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getname
 @ cdecl -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getname
 @ cdecl -arch=arm ?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ(ptr) _Container_base12__Getpfirst
 @ thiscall -arch=i386 ?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ(ptr) _Container_base12__Getpfirst
@@ -1778,10 +1778,10 @@
 @ extern ?_Sync@ios_base@std@@0_NA ios_base_Sync
 @ cdecl -arch=win32 ?_Syserror_map@std@@YAPBDH@Z(long) _Syserror_map
 @ cdecl -arch=win64 ?_Syserror_map@std@@YAPEBDH@Z(long) _Syserror_map
-@ stub ?_Throw_C_error@std@@YAXH@Z
+@ cdecl ?_Throw_C_error@std@@YAXH@Z(long) _Throw_C_error
 @ stub ?_Throw_Cpp_error@std@@YAXH@Z
-@ stub -arch=win32 ?_Throw_future_error@std@@YAXABVerror_code@1@@Z
-@ stub -arch=win64 ?_Throw_future_error@std@@YAXAEBVerror_code@1@@Z
+@ cdecl -arch=win32 ?_Throw_future_error@std@@YAXABVerror_code@1@@Z(ptr) _Throw_future_error
+@ cdecl -arch=win64 ?_Throw_future_error@std@@YAXAEBVerror_code@1@@Z(ptr) _Throw_future_error
 @ stub ?_Throw_lock_error@threads@stdext@@YAXXZ
 @ stub ?_Throw_resource_error@threads@stdext@@YAXXZ
 @ cdecl -arch=arm ?_Tidy@?$_Yarn@D@std@@AAAXXZ(ptr) _Yarn_char__Tidy
@@ -1802,8 +1802,8 @@
 @ cdecl -arch=arm ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAAXXZ(ptr) time_get_wchar__Tidy
 @ thiscall -arch=i386 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AAEXXZ(ptr) time_get_wchar__Tidy
 @ cdecl -arch=win64 ?_Tidy@?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEAAXXZ(ptr) time_get_wchar__Tidy
-@ cdecl -arch=win32 ?_Tidy@ios_base@std@@AAAXXZ(ptr) ios_base_Tidy
-@ stub -arch=i386 ?_Tidy@ios_base@std@@AAEXXZ
+@ cdecl -arch=arm ?_Tidy@ios_base@std@@AAAXXZ(ptr) ios_base_Tidy
+@ thiscall -arch=i386 ?_Tidy@ios_base@std@@AAEXXZ(ptr) ios_base_Tidy
 @ cdecl -arch=win64 ?_Tidy@ios_base@std@@AEAAXXZ(ptr) ios_base_Tidy
 @ cdecl -arch=win32 ?_Unlink@sys@tr2@std@@YAHPBD@Z(str) tr2_sys__Unlink
 @ cdecl -arch=win64 ?_Unlink@sys@tr2@std@@YAHPEBD@Z(str) tr2_sys__Unlink
@@ -1827,13 +1827,13 @@
 @ stub -arch=arm ?_W_Gettnames@_Locinfo@std@@QBA?AV_Timevec@2@XZ
 @ stub -arch=i386 ?_W_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ
 @ stub -arch=win64 ?_W_Gettnames@_Locinfo@std@@QEBA?AV_Timevec@2@XZ
-@ stub -arch=win32 ?_Winerror_map@std@@YAPBDH@Z
-@ stub -arch=win64 ?_Winerror_map@std@@YAPEBDH@Z
+@ cdecl -arch=win32 ?_Winerror_map@std@@YAPBDH@Z(long) _Winerror_map_str
+@ cdecl -arch=win64 ?_Winerror_map@std@@YAPEBDH@Z(long) _Winerror_map_str
 @ cdecl ?_XLgamma@std@@YAMM@Z(float) std__XLgamma_float
 @ cdecl ?_XLgamma@std@@YANN@Z(double) std__XLgamma_double
 @ cdecl ?_XLgamma@std@@YAOO@Z(double) std__XLgamma_double
 @ cdecl ?_Xbad_alloc@std@@YAXXZ() _Xmem
-@ stub ?_Xbad_function_call@std@@YAXXZ
+@ cdecl ?_Xbad_function_call@std@@YAXXZ() _Xbad_function_call
 @ cdecl -arch=win32 ?_Xinvalid_argument@std@@YAXPBD@Z(str) _Xinvalid_argument
 @ cdecl -arch=win64 ?_Xinvalid_argument@std@@YAXPEBD@Z(str) _Xinvalid_argument
 @ cdecl -arch=win32 ?_Xlength_error@std@@YAXPBD@Z(str) _Xlength_error

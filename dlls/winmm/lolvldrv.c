@@ -34,11 +34,6 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 
-#include "wingdi.h"
-#include "ole2.h"
-#include "devpkey.h"
-#include "mmdeviceapi.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
 /* each known type of driver has an instance of this structure */
@@ -137,7 +132,7 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
     TRACE("(%d, %04x, %p, %p, %p, %p)\n",
           size, type, hndl, dwFlags, dwCallback, dwInstance);
 
-    mld = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    mld = calloc(1, size);
     if (!mld)	return NULL;
 
     /* find an empty slot in MM_MLDrvs table */
@@ -146,7 +141,7 @@ LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
     if (i == ARRAY_SIZE(MM_MLDrvs)) {
 	/* the MM_MLDrvs table could be made growable in the future if needed */
 	ERR("Too many open drivers\n");
-        HeapFree(GetProcessHeap(), 0, mld);
+        free(mld);
 	return NULL;
     }
     MM_MLDrvs[i] = mld;
@@ -179,7 +174,7 @@ void	MMDRV_Free(HANDLE hndl, LPWINE_MLD mld)
 	UINT_PTR idx = (UINT_PTR)hndl & ~0x8000;
 	if (idx < ARRAY_SIZE(MM_MLDrvs)) {
 	    MM_MLDrvs[idx] = NULL;
-	    HeapFree(GetProcessHeap(), 0, mld);
+	    free(mld);
 	    return;
 	}
     }
@@ -334,6 +329,8 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
     DWORD			ret;
     UINT			count = 0;
     int				i, k;
+    WINE_MLD *mem;
+
     TRACE("(%p, %04x, %04x)\n", lpDrv, type, wMsg);
 
     part->nIDMin = part->nIDMax = 0;
@@ -370,14 +367,9 @@ static  BOOL	MMDRV_InitPerType(LPWINE_MM_DRIVER lpDrv, UINT type, UINT wMsg)
 	  part->nIDMin, part->nIDMax, llTypes[type].wMaxId,
 	  lpDrv->drvname, llTypes[type].typestr);
     /* realloc translation table */
-    if (llTypes[type].lpMlds)
-        llTypes[type].lpMlds = (LPWINE_MLD)
-	HeapReAlloc(GetProcessHeap(), 0, llTypes[type].lpMlds - 1,
-		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
-    else
-        llTypes[type].lpMlds = (LPWINE_MLD)
-	HeapAlloc(GetProcessHeap(), 0,
-		    sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1)) + 1;
+    mem = llTypes[type].lpMlds ? llTypes[type].lpMlds - 1 : NULL;
+    mem = realloc(mem, sizeof(WINE_MLD) * (llTypes[type].wMaxId + 1));
+    llTypes[type].lpMlds = mem + 1;
 
     /* re-build the translation table */
     if (lpDrv->bIsMapper) {
@@ -461,7 +453,7 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
      * I don't have any clue for PE drvs
      */
     lpDrv->bIsMapper = bIsMapper;
-    lpDrv->drvname = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(drvRegName) + 1), drvRegName);
+    lpDrv->drvname = strdup(drvRegName);
 
     /* Finish init and get the count of the devices */
     i = 0;
@@ -474,7 +466,7 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
     /* if all those func calls return FALSE, then the driver must be unloaded */
     if (!i) {
 	CloseDriver(lpDrv->hDriver, 0, 0);
-	HeapFree(GetProcessHeap(), 0, lpDrv->drvname);
+	free(lpDrv->drvname);
 	WARN("Driver initialization failed\n");
 	return FALSE;
     }
@@ -489,64 +481,9 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
  */
 static void MMDRV_Init(void)
 {
-    IMMDeviceEnumerator *devenum;
-    IMMDevice *device;
-    IPropertyStore *ps;
-    PROPVARIANT pv;
-    DWORD size;
-    char *drvA;
-    HRESULT init_hr, hr;
-
-    TRACE("()\n");
-
-    init_hr = CoInitialize(NULL);
-
-    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
-            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
-    if(FAILED(hr)){
-        ERR("CoCreateInstance failed: %08lx\n", hr);
-        goto exit;
-    }
-
-    hr = IMMDeviceEnumerator_GetDevice(devenum, L"Wine info device", &device);
-    IMMDeviceEnumerator_Release(devenum);
-    if(FAILED(hr)){
-        ERR("GetDevice failed: %08lx\n", hr);
-        goto exit;
-    }
-
-    hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
-    if(FAILED(hr)){
-        ERR("OpenPropertyStore failed: %08lx\n", hr);
-        IMMDevice_Release(device);
-        goto exit;
-    }
-
-    hr = IPropertyStore_GetValue(ps,
-            (const PROPERTYKEY *)&DEVPKEY_Device_Driver, &pv);
-    IPropertyStore_Release(ps);
-    IMMDevice_Release(device);
-    if(FAILED(hr)){
-        ERR("GetValue failed: %08lx\n", hr);
-        goto exit;
-    }
-
-    size = WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1,
-            NULL, 0, NULL, NULL);
-    drvA = HeapAlloc(GetProcessHeap(), 0, size);
-    WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1, drvA, size, NULL, NULL);
-
-    MMDRV_Install(drvA, drvA, FALSE);
-
-    HeapFree(GetProcessHeap(), 0, drvA);
-    PropVariantClear(&pv);
-
+    MMDRV_Install("mmdevapi", "mmdevapi.dll", FALSE);
     MMDRV_Install("wavemapper", "msacm32.drv", TRUE);
     MMDRV_Install("midimapper", "midimap.dll", TRUE);
-
-exit:
-    if(SUCCEEDED(init_hr))
-        CoUninitialize();
 }
 
 /******************************************************************
@@ -607,15 +544,15 @@ void MMDRV_Exit(void)
         CloseDriver(MMDrvs[i].hDriver, 0, 0);
     }
     if (llTypes[MMDRV_AUX].lpMlds)
-        HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_AUX].lpMlds - 1);
+        free(llTypes[MMDRV_AUX].lpMlds - 1);
     if (llTypes[MMDRV_MIXER].lpMlds)
-        HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_MIXER].lpMlds - 1);
+        free(llTypes[MMDRV_MIXER].lpMlds - 1);
     if (llTypes[MMDRV_MIDIIN].lpMlds)
-        HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_MIDIIN].lpMlds - 1);
+        free(llTypes[MMDRV_MIDIIN].lpMlds - 1);
     if (llTypes[MMDRV_MIDIOUT].lpMlds)
-        HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_MIDIOUT].lpMlds - 1);
+        free(llTypes[MMDRV_MIDIOUT].lpMlds - 1);
     if (llTypes[MMDRV_WAVEIN].lpMlds)
-        HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_WAVEIN].lpMlds - 1);
+        free(llTypes[MMDRV_WAVEIN].lpMlds - 1);
     if (llTypes[MMDRV_WAVEOUT].lpMlds)
-        HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_WAVEOUT].lpMlds - 1);
+        free(llTypes[MMDRV_WAVEOUT].lpMlds - 1);
 }

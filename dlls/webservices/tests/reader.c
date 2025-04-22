@@ -4048,6 +4048,7 @@ static void test_WsResetError(void)
     WsFreeError( error );
 
     memset( &fault, 0, sizeof(fault) );
+    memset( &xmlstr, 0, sizeof(xmlstr) );
     xmlstr.bytes = (BYTE *)"str";
     xmlstr.length = 3;
 
@@ -4056,7 +4057,7 @@ static void test_WsResetError(void)
 
     hr = WsSetFaultErrorProperty( error, WS_FAULT_ERROR_PROPERTY_FAULT, &fault, sizeof(fault) );
     ok( hr == S_OK, "got %#lx\n", hr );
-    hr = WsSetFaultErrorProperty( error, WS_FAULT_ERROR_PROPERTY_ACTION, &xmlstr, sizeof(WS_XML_STRING) );
+    hr = WsSetFaultErrorProperty( error, WS_FAULT_ERROR_PROPERTY_ACTION, &xmlstr, sizeof(xmlstr) );
     ok( hr == S_OK, "got %#lx\n", hr );
 
     hr = WsResetError( error );
@@ -6844,7 +6845,7 @@ static void test_empty_text_field(void)
     } *test2;
     struct test3
     {
-        BOOL bool;
+        BOOL boolean;
     } *test3;
     struct test4
     {
@@ -6910,7 +6911,7 @@ static void test_empty_text_field(void)
     memset( &f, 0, sizeof(f) );
     f.mapping   = WS_TEXT_FIELD_MAPPING;
     f.type      = WS_BOOL_TYPE;
-    f.offset    = FIELD_OFFSET(struct test3, bool);
+    f.offset    = FIELD_OFFSET(struct test3, boolean);
     fields[0] = &f;
 
     memset( &s, 0, sizeof(s) );

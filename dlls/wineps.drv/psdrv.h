@@ -61,13 +61,8 @@ struct ps_brush_pattern
 };
 
 typedef struct {
-    INT		    index;
-    LPCSTR	    sz;
-} GLYPHNAME;
-
-typedef struct {
     LONG	    UV;
-    const GLYPHNAME *name;
+    const char     *name;
 } UNICODEGLYPH;
 
 typedef struct {
@@ -81,19 +76,14 @@ typedef struct _tagAFMLIGS {
 } AFMLIGS;
 
 typedef struct {
-    int			C;		/* character */
     LONG     	    	UV;
     float		WX;
-    const GLYPHNAME	*N;		/* name */
     AFMBBOX		B;
-    const AFMLIGS	*L;		/* Ligatures */
 } OLD_AFMMETRICS;
 
 typedef struct {
-    INT     	    	C;  	    	    	/* AFM encoding (or -1) */
-    LONG    	    	UV; 	    	    	/* Unicode value */
-    FLOAT   	    	WX; 	    	    	/* Advance width */
-    const GLYPHNAME 	*N; 	    	    	/* Glyph name */
+    WCHAR    	    	UV; 	    	    	/* Unicode value */
+    SHORT   	    	WX; 	    	    	/* Advance width */
 } AFMMETRICS;
 
 typedef struct {
@@ -102,26 +92,18 @@ typedef struct {
     SHORT   	    	sDescender; 	    	/* hhea:Descender */
     SHORT   	    	sLineGap;   	    	/* hhea:LineGap */
     SHORT   	    	sAvgCharWidth;	    	/* OS/2:xAvgCharWidth */
-    SHORT   	    	sTypoAscender;	    	/* OS/2:sTypoAscender */
-    SHORT   	    	sTypoDescender;     	/* OS/2:sTypoDescender */
-    SHORT   	    	sTypoLineGap;	    	/* OS/2:sTypeLineGap */
     USHORT  	    	usWinAscent;	    	/* OS/2:usWinAscent */
     USHORT  	    	usWinDescent;	    	/* OS/2:usWinDescent */
 } WINMETRICS;
 
 typedef struct _tagAFM {
     const char         *FontName;
-    const WCHAR        *FullName;
     const WCHAR        *FamilyName;
     const WCHAR        *EncodingScheme;
     LONG		Weight;			/* FW_NORMAL etc. */
     float		ItalicAngle;
     BOOL		IsFixedPitch;
-    float		UnderlinePosition;
-    float		UnderlineThickness;
     AFMBBOX		FontBBox;
-    float		Ascender;
-    float		Descender;
     WINMETRICS	    	WinMetrics;
     int			NumofMetrics;
     const AFMMETRICS	*Metrics;
@@ -368,18 +350,11 @@ typedef struct
     PSDRV_DEVMODE	*Devmode;
     PRINTERINFO		*pi;
     int                 pathdepth;
+    RECT                bbox;
 } print_ctx;
 
 extern print_ctx *create_print_ctx( HDC hdc, const WCHAR *device,
         const DEVMODEW *devmode );
-
-/*
- *  Every glyph name in the Adobe Glyph List and the 35 core PostScript fonts
- */
-
-extern const INT    PSDRV_AGLGlyphNamesSize;
-extern GLYPHNAME    PSDRV_AGLGlyphNames[];
-
 
 /*
  *  The AGL encoding vector
@@ -465,6 +440,7 @@ extern char PSDRV_UnicodeToANSI(int u);
 
 extern INT PSDRV_WriteHeader( print_ctx *ctx, LPCWSTR title );
 extern INT PSDRV_WriteFooter( print_ctx *ctx );
+extern INT PSDRV_WritePageSize( print_ctx *ctx );
 extern INT PSDRV_WriteNewPage( print_ctx *ctx );
 extern INT PSDRV_WriteEndPage( print_ctx *ctx );
 extern BOOL PSDRV_WriteMoveTo(print_ctx *ctx, INT x, INT y);
@@ -508,9 +484,6 @@ extern BOOL PSDRV_WriteArrayDef(print_ctx *ctx, CHAR *pszArrayName, INT nSize);
 
 extern INT PSDRV_StartPage( print_ctx *ctx );
 
-INT PSDRV_GlyphListInit(void);
-const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
-VOID PSDRV_IndexGlyphList(void);
 BOOL PSDRV_GetType1Metrics(void);
 SHORT PSDRV_CalcAvgCharWidth(const AFM *afm);
 
@@ -545,13 +518,7 @@ extern DWORD ASCII85_encode(BYTE *in_buf, DWORD len, BYTE *out_buf);
 extern void passthrough_enter(print_ctx *ctx);
 extern void passthrough_leave(print_ctx *ctx);
 
-#define push_lc_numeric(x) do {					\
-	const char *tmplocale = setlocale(LC_NUMERIC,NULL);	\
-	setlocale(LC_NUMERIC,x);
-
-#define pop_lc_numeric()					\
-	setlocale(LC_NUMERIC,tmplocale);			\
-} while (0)
+extern _locale_t c_locale;
 
 static inline WCHAR *strdupW( const WCHAR *str )
 {

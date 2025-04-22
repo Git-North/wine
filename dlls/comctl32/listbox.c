@@ -610,7 +610,7 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
     if (index < descr->nb_items)
     {
         item_str = get_item_string(descr, index);
-        selected = is_item_selected(descr, index);
+        selected = !(descr->style & LBS_NOSEL) && is_item_selected(descr, index);
     }
 
     focused = !ignoreFocus && descr->focus_item == index && descr->caret_on && descr->in_focus;
@@ -880,9 +880,9 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
     return len;
 }
 
-static inline INT LISTBOX_lstrcmpiW( LCID lcid, LPCWSTR str1, LPCWSTR str2 )
+static inline INT LISTBOX_lstrcmpiW( LCID lcid, LPCWSTR str1, LPCWSTR str2, int len )
 {
-    INT ret = CompareStringW( lcid, NORM_IGNORECASE, str1, -1, str2, -1 );
+    INT ret = CompareStringW( lcid, NORM_IGNORECASE, str1, len, str2, len );
     if (ret == CSTR_LESS_THAN)
         return -1;
     if (ret == CSTR_EQUAL)
@@ -910,7 +910,7 @@ static INT LISTBOX_FindStringPos( LB_DESCR *descr, LPCWSTR str, BOOL exact )
     {
         index = (min + max) / 2;
         if (HAS_STRINGS(descr))
-            res = LISTBOX_lstrcmpiW( descr->locale, get_item_string(descr, index), str );
+            res = LISTBOX_lstrcmpiW( descr->locale, get_item_string(descr, index), str, -1 );
         else
         {
             COMPAREITEMSTRUCT cis;
@@ -965,13 +965,13 @@ static INT LISTBOX_FindFileStrPos( LB_DESCR *descr, LPCWSTR str )
             else  /* directory */
             {
                 if (str[1] == '-') res = 1;
-                else res = LISTBOX_lstrcmpiW( descr->locale, str, p );
+                else res = LISTBOX_lstrcmpiW( descr->locale, str, p, -1 );
             }
         }
         else  /* filename */
         {
             if (*str == '[') res = 1;
-            else res = LISTBOX_lstrcmpiW( descr->locale, str, p );
+            else res = LISTBOX_lstrcmpiW( descr->locale, str, p, -1 );
         }
         if (!res) return index;
         if (res < 0) max = index;
@@ -1002,7 +1002,7 @@ static INT LISTBOX_FindString( LB_DESCR *descr, INT start, LPCWSTR str, BOOL exa
             for (i = 0, index = start; i < descr->nb_items; i++, index++)
             {
                 if (index == descr->nb_items) index = 0;
-                if (!LISTBOX_lstrcmpiW(descr->locale, str, get_item_string(descr, index)))
+                if (!LISTBOX_lstrcmpiW(descr->locale, str, get_item_string(descr, index), -1))
                     return index;
             }
         }
@@ -1017,11 +1017,11 @@ static INT LISTBOX_FindString( LB_DESCR *descr, INT start, LPCWSTR str, BOOL exa
                 if (index == descr->nb_items) index = 0;
                 item_str = get_item_string(descr, index);
 
-                if (!wcsnicmp(str, item_str, len)) return index;
+                if (!LISTBOX_lstrcmpiW(descr->locale, str, item_str, len)) return index;
                 if (item_str[0] == '[')
                 {
-                    if (!wcsnicmp(str, item_str + 1, len)) return index;
-                    if (item_str[1] == '-' && !wcsnicmp(str, item_str + 2, len)) return index;
+                    if (!LISTBOX_lstrcmpiW(descr->locale, str, item_str + 1, len)) return index;
+                    if (item_str[1] == '-' && !LISTBOX_lstrcmpiW(descr->locale, str, item_str + 2, len)) return index;
                 }
             }
         }
@@ -1526,6 +1526,9 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
             LISTBOX_InvalidateItemRect(descr, i);
         }
     }
+
+    NotifyWinEvent( EVENT_OBJECT_SELECTIONWITHIN, descr->self, OBJID_CLIENT, 0 );
+
     return LB_OKAY;
 }
 
@@ -1711,6 +1714,9 @@ static LRESULT LISTBOX_InsertString( LB_DESCR *descr, INT index, LPCWSTR str )
 
     TRACE("[%p]: added item %d %s\n",
           descr->self, index, HAS_STRINGS(descr) ? debugstr_w(new_str) : "" );
+
+    NotifyWinEvent( EVENT_OBJECT_CREATE, descr->self, OBJID_CLIENT, index + 1 );
+
     return index;
 }
 
@@ -1757,6 +1763,7 @@ static LRESULT LISTBOX_RemoveItem( LB_DESCR *descr, INT index )
 
     if (descr->nb_items == 1)
     {
+        NotifyWinEvent( EVENT_OBJECT_DESTROY, descr->self, OBJID_CLIENT, 1 );
         SendMessageW(descr->self, LB_RESETCONTENT, 0, 0);
         return LB_OKAY;
     }
@@ -1793,6 +1800,7 @@ static LRESULT LISTBOX_RemoveItem( LB_DESCR *descr, INT index )
           descr->focus_item = descr->nb_items - 1;
           if (descr->focus_item < 0) descr->focus_item = 0;
     }
+    NotifyWinEvent( EVENT_OBJECT_DESTROY, descr->self, OBJID_CLIENT, index + 1 );
     return LB_OKAY;
 }
 

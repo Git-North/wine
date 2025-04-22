@@ -40,6 +40,17 @@
 @ cdecl wined3d_command_list_decref(ptr)
 @ cdecl wined3d_command_list_incref(ptr)
 
+@ cdecl wined3d_decoder_begin_frame(ptr ptr)
+@ cdecl wined3d_decoder_create(ptr ptr ptr)
+@ cdecl wined3d_decoder_decref(ptr)
+@ cdecl wined3d_decoder_decode(ptr long long)
+@ cdecl wined3d_decoder_end_frame(ptr)
+@ cdecl wined3d_decoder_get_buffer(ptr long)
+
+@ cdecl wined3d_decoder_output_view_create(ptr ptr ptr ptr ptr)
+@ cdecl wined3d_decoder_output_view_decref(ptr)
+@ cdecl wined3d_decoder_output_view_incref(ptr)
+
 @ cdecl wined3d_deferred_context_create(ptr ptr)
 @ cdecl wined3d_deferred_context_destroy(ptr)
 @ cdecl wined3d_deferred_context_record_command_list(ptr long ptr)
@@ -71,9 +82,11 @@
 @ cdecl wined3d_device_get_state(ptr)
 @ cdecl wined3d_device_get_swapchain(ptr long)
 @ cdecl wined3d_device_get_swapchain_count(ptr)
+@ cdecl wined3d_device_get_video_decode_profile_count(ptr)
+@ cdecl wined3d_device_get_video_decode_profile(ptr long ptr)
 @ cdecl wined3d_device_get_wined3d(ptr)
 @ cdecl wined3d_device_incref(ptr)
-@ cdecl wined3d_device_process_vertices(ptr long long long ptr ptr long long)
+@ cdecl wined3d_device_process_vertices(ptr ptr long long long ptr ptr long long)
 @ cdecl wined3d_device_release_focus_window(ptr)
 @ cdecl wined3d_device_reset(ptr ptr ptr ptr long)
 @ cdecl wined3d_device_set_clip_status(ptr ptr)
@@ -87,10 +100,11 @@
 @ cdecl wined3d_device_set_software_vertex_processing(ptr long)
 @ cdecl wined3d_device_show_cursor(ptr long)
 @ cdecl wined3d_device_update_texture(ptr ptr ptr)
-@ cdecl wined3d_device_validate_device(ptr ptr)
+@ cdecl wined3d_device_validate_device(ptr ptr ptr)
 
 @ cdecl wined3d_device_context_blt(ptr ptr long ptr ptr long ptr long ptr long)
 @ cdecl wined3d_device_context_clear_rendertarget_view(ptr ptr ptr long ptr float long)
+@ cdecl wined3d_device_context_clear_sysmem_texture(ptr ptr long ptr long ptr)
 @ cdecl wined3d_device_context_clear_uav_float(ptr ptr ptr)
 @ cdecl wined3d_device_context_clear_uav_uint(ptr ptr ptr)
 @ cdecl wined3d_device_context_copy_resource(ptr ptr ptr)
@@ -103,6 +117,7 @@
 @ cdecl wined3d_device_context_draw_indirect(ptr ptr long long)
 @ cdecl wined3d_device_context_execute_command_list(ptr ptr long)
 @ cdecl wined3d_device_context_flush(ptr)
+@ cdecl wined3d_device_context_flush_mapped_buffer(ptr ptr)
 @ cdecl wined3d_device_context_generate_mipmaps(ptr ptr)
 @ cdecl wined3d_device_context_get_blend_state(ptr ptr ptr)
 @ cdecl wined3d_device_context_get_constant_buffer(ptr long long ptr)
@@ -227,9 +242,11 @@
 @ cdecl wined3d_state_get_feature_level(ptr)
 
 @ cdecl wined3d_stateblock_apply(ptr ptr)
+@ cdecl wined3d_stateblock_apply_clear_state(ptr ptr)
 @ cdecl wined3d_stateblock_capture(ptr ptr)
 @ cdecl wined3d_stateblock_create(ptr ptr long ptr)
 @ cdecl wined3d_stateblock_decref(ptr)
+@ cdecl wined3d_stateblock_depth_buffer_changed(ptr)
 @ cdecl wined3d_stateblock_get_light(ptr long ptr ptr)
 @ cdecl wined3d_stateblock_get_ps_consts_b(ptr long long ptr)
 @ cdecl wined3d_stateblock_get_ps_consts_f(ptr long long ptr)
@@ -241,6 +258,7 @@
 @ cdecl wined3d_stateblock_incref(ptr)
 @ cdecl wined3d_stateblock_init_contained_states(ptr)
 @ cdecl wined3d_stateblock_multiply_transform(ptr long ptr)
+@ cdecl wined3d_stateblock_primary_dirtify_all_states(ptr ptr)
 @ cdecl wined3d_stateblock_reset(ptr)
 @ cdecl wined3d_stateblock_set_base_vertex_index(ptr long)
 @ cdecl wined3d_stateblock_set_clip_plane(ptr long ptr)
@@ -258,6 +276,7 @@
 @ cdecl wined3d_stateblock_set_stream_source(ptr long ptr long long)
 @ cdecl wined3d_stateblock_set_stream_source_freq(ptr long long)
 @ cdecl wined3d_stateblock_set_texture(ptr long ptr)
+@ cdecl wined3d_stateblock_set_texture_lod(ptr ptr long)
 @ cdecl wined3d_stateblock_set_texture_stage_state(ptr long long long)
 @ cdecl wined3d_stateblock_set_transform(ptr long ptr)
 @ cdecl wined3d_stateblock_set_vertex_declaration(ptr ptr)
@@ -266,6 +285,7 @@
 @ cdecl wined3d_stateblock_set_vs_consts_b(ptr long long ptr)
 @ cdecl wined3d_stateblock_set_vs_consts_f(ptr long long ptr)
 @ cdecl wined3d_stateblock_set_vs_consts_i(ptr long long ptr)
+@ cdecl wined3d_stateblock_texture_changed(ptr ptr)
 
 @ cdecl wined3d_streaming_buffer_map(ptr ptr long long ptr ptr)
 @ cdecl wined3d_streaming_buffer_unmap(ptr)
@@ -292,10 +312,12 @@
 
 @ cdecl wined3d_swapchain_state_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_swapchain_state_destroy(ptr)
+@ cdecl wined3d_swapchain_state_get_size(ptr ptr ptr)
 @ cdecl wined3d_swapchain_state_is_windowed(ptr)
 @ cdecl wined3d_swapchain_state_resize_target(ptr ptr)
 @ cdecl wined3d_swapchain_state_set_fullscreen(ptr ptr ptr)
 
+@ cdecl wined3d_texture_acquire_identity_srv(ptr)
 @ cdecl wined3d_texture_add_dirty_region(ptr long ptr)
 @ cdecl wined3d_texture_create(ptr ptr long long long ptr ptr ptr ptr)
 @ cdecl wined3d_texture_decref(ptr)
@@ -330,6 +352,9 @@
 @ cdecl wined3d_vertex_declaration_get_parent(ptr)
 @ cdecl wined3d_vertex_declaration_incref(ptr)
 
+@ stdcall vkd3d_D3DPreprocess(ptr long ptr ptr ptr ptr ptr) D3DPreprocess
+@ stdcall vkd3d_D3DCompile2VKD3D(ptr long ptr ptr ptr ptr ptr long long long ptr long ptr ptr long) D3DCompile2VKD3D
+
 @ cdecl vkd3d_acquire_vk_queue(ptr)
 @ cdecl vkd3d_create_device(ptr ptr ptr)
 @ cdecl vkd3d_create_image_resource(ptr ptr ptr)
@@ -351,6 +376,7 @@
 @ cdecl vkd3d_resource_incref(ptr)
 @ cdecl vkd3d_serialize_root_signature(ptr long ptr ptr)
 @ cdecl vkd3d_serialize_versioned_root_signature(ptr ptr ptr)
+@ cdecl vkd3d_queue_signal_on_cpu(ptr ptr long)
 
 @ cdecl vkd3d_shader_compile(ptr ptr ptr)
 @ cdecl vkd3d_shader_convert_root_signature(ptr long ptr)

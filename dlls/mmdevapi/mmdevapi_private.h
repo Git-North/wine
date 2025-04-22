@@ -26,10 +26,66 @@
 #include <wine/unixlib.h>
 
 #include "unixlib.h"
-#include "mmdevdrv.h"
 
-extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv) DECLSPEC_HIDDEN;
-extern void MMDevEnum_Free(void) DECLSPEC_HIDDEN;
+typedef struct audio_session {
+    GUID guid;
+    struct list clients;
+
+    IMMDevice *device;
+
+    float master_vol;
+    UINT32 channel_count;
+    float *channel_vols;
+    BOOL mute;
+
+    WCHAR *display_name;
+    WCHAR *icon_path;
+    GUID grouping_param;
+
+    struct list entry;
+} AudioSession;
+
+typedef struct audio_session_wrapper {
+    IAudioSessionControl2 IAudioSessionControl2_iface;
+    IChannelAudioVolume IChannelAudioVolume_iface;
+    ISimpleAudioVolume ISimpleAudioVolume_iface;
+
+    LONG ref;
+
+    struct audio_client *client;
+    struct audio_session *session;
+} AudioSessionWrapper;
+
+struct audio_client {
+    IAudioClient3 IAudioClient3_iface;
+    IAudioRenderClient IAudioRenderClient_iface;
+    IAudioCaptureClient IAudioCaptureClient_iface;
+    IAudioClock IAudioClock_iface;
+    IAudioClock2 IAudioClock2_iface;
+    IAudioClockAdjustment IAudioClockAdjustment_iface;
+    IAudioStreamVolume IAudioStreamVolume_iface;
+
+    LONG ref;
+
+    IMMDevice *parent;
+    IUnknown *marshal;
+
+    EDataFlow dataflow;
+    float *vols;
+    UINT32 channel_count;
+    stream_handle stream;
+
+    HANDLE timer_thread;
+
+    struct audio_session *session;
+    struct audio_session_wrapper *session_wrapper;
+
+    struct list entry;
+    char *device_name;
+};
+
+extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv);
+extern void MMDevEnum_Free(void);
 
 typedef struct _DriverFuncs {
     HMODULE module;
@@ -41,25 +97,14 @@ typedef struct _DriverFuncs {
      * priority value reflecting the likelihood that they are actually
      * valid. See enum _DriverPriority. */
     int priority;
-
-    BOOL (WINAPI *pget_device_name_from_guid)(GUID *guid, char **name, EDataFlow *flow);
-    /* ids gets an array of human-friendly endpoint names
-     * keys gets an array of driver-specific stuff that is used
-     *   in GetAudioEndpoint to identify the endpoint
-     * it is the caller's responsibility to free both arrays, and
-     *   all of the elements in both arrays with HeapFree() */
-    HRESULT (WINAPI *pGetEndpointIDs)(EDataFlow flow, WCHAR ***ids,
-            GUID **guids, UINT *num, UINT *default_index);
 } DriverFuncs;
 
-extern DriverFuncs drvs DECLSPEC_HIDDEN;
+extern DriverFuncs drvs;
 
 typedef struct MMDevice {
     IMMDevice IMMDevice_iface;
     IMMEndpoint IMMEndpoint_iface;
     LONG ref;
-
-    CRITICAL_SECTION crst;
 
     EDataFlow flow;
     DWORD state;
@@ -75,14 +120,17 @@ static inline void wine_unix_call(const unsigned int code, void *args)
     assert(!status);
 }
 
-extern HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out) DECLSPEC_HIDDEN;
-extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolumeEx **ppv) DECLSPEC_HIDDEN;
-extern HRESULT AudioSessionManager_Create(IMMDevice *device, IAudioSessionManager2 **ppv) DECLSPEC_HIDDEN;
-extern HRESULT SpatialAudioClient_Create(IMMDevice *device, ISpatialAudioClient **out) DECLSPEC_HIDDEN;
+extern HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out);
+extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolumeEx **ppv);
+extern HRESULT AudioSessionManager_Create(IMMDevice *device, IAudioSessionManager2 **ppv);
+extern HRESULT SpatialAudioClient_Create(IMMDevice *device, ISpatialAudioClient **out);
 
-extern HRESULT load_devices_from_reg(void) DECLSPEC_HIDDEN;
-extern HRESULT load_driver_devices(EDataFlow flow) DECLSPEC_HIDDEN;
+extern BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow *flow );
+extern HRESULT load_devices_from_reg(void);
+extern HRESULT load_driver_devices(EDataFlow flow);
 
-extern void main_loop_stop(void) DECLSPEC_HIDDEN;
+extern void main_loop_stop(void);
 
-extern const WCHAR drv_keyW[] DECLSPEC_HIDDEN;
+extern const WCHAR drv_keyW[];
+
+extern HRESULT get_audio_sessions(IMMDevice *device, GUID **ret, int *ret_count);

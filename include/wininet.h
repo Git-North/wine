@@ -1242,6 +1242,7 @@ BOOLAPI GopherGetAttributeW(HINTERNET ,LPCWSTR ,LPCWSTR ,LPBYTE ,
 #define HTTP_STATUS_NOT_MODIFIED        304
 #define HTTP_STATUS_USE_PROXY           305
 #define HTTP_STATUS_REDIRECT_KEEP_VERB  307
+#define HTTP_STATUS_PERMANENT_REDIRECT  308
 #define HTTP_STATUS_BAD_REQUEST         400
 #define HTTP_STATUS_DENIED              401
 #define HTTP_STATUS_PAYMENT_REQ         402
@@ -1742,8 +1743,8 @@ INTERNETAPI BOOL WINAPI InternetSetDialStateW(LPCWSTR ,DWORD ,DWORD);
 #define InternetSetDialState WINELIB_NAME_AW(InternetSetDialState)
 #define INTERNET_DIALSTATE_DISCONNECTED     1
 
-BOOL WINAPI InternetGetConnectedStateExA(LPDWORD, LPSTR, DWORD, DWORD);
-BOOL WINAPI InternetGetConnectedStateExW(LPDWORD, LPWSTR, DWORD, DWORD);
+INTERNETAPI BOOL WINAPI InternetGetConnectedStateExA(LPDWORD, LPSTR, DWORD, DWORD);
+INTERNETAPI BOOL WINAPI InternetGetConnectedStateExW(LPDWORD, LPWSTR, DWORD, DWORD);
 #define InternetGetConnectedStateEx WINELIB_NAME_AW(InternetGetConnectedStateEx)
 
 typedef struct AutoProxyHelperVtbl
@@ -1779,8 +1780,8 @@ typedef BOOL (CALLBACK *pfnInternetInitializeAutoProxyDll)(DWORD, LPSTR, LPSTR, 
 #define PROXY_AUTO_DETECT_TYPE_DHCP  1
 #define PROXY_AUTO_DETECT_TYPE_DNS_A 2
 
-BOOL WINAPI InternetInitializeAutoProxyDll(DWORD);
-BOOL WINAPI DetectAutoProxyUrl(LPSTR, DWORD, DWORD);
+INTERNETAPI BOOL WINAPI InternetInitializeAutoProxyDll(DWORD);
+INTERNETAPI BOOL WINAPI DetectAutoProxyUrl(LPSTR, DWORD, DWORD);
 
 #ifdef __cplusplus
 }

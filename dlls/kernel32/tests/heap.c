@@ -217,7 +217,6 @@ static void test_HeapCreate(void)
     count = GetProcessHeaps( ARRAY_SIZE(heaps), heaps );
     ok( count == heap_count + 2, "GetProcessHeaps returned %lu\n", count );
     ok( heaps[0] == GetProcessHeap(), "got wrong heap\n" );
-    todo_wine
     ok( heaps[heap_count + 0] == heap, "got wrong heap\n" );
     todo_wine
     ok( heaps[heap_count + 1] == heap1, "got wrong heap\n" );
@@ -264,6 +263,9 @@ static void test_HeapCreate(void)
         ptr1 = HeapReAlloc( heap, 0, (void *)0xdeadbe00, 1 );
         ok( !ptr1, "HeapReAlloc succeeded\n" );
         ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+        ret = HeapValidate( heap, 0, (void *)0xdeadbe00 );
+        ok( !ret, "HeapValidate succeeded\n" );
+        ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
         SetLastError( 0xdeadbeef );
         ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
         ptr1 = HeapReAlloc( heap, 0, ptr, 1 );
@@ -275,12 +277,6 @@ static void test_HeapCreate(void)
     ret = HeapValidate( heap, 0, NULL );
     ok( ret, "HeapValidate failed, error %lu\n", GetLastError() );
     ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
-    SetLastError( 0xdeadbeef );
-    ret = HeapValidate( heap, 0, (void *)0xdeadbe00 );
-    ok( !ret, "HeapValidate succeeded\n" );
-    todo_wine
-    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
-    SetLastError( 0xdeadbeef );
     ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
     ret = HeapValidate( heap, 0, ptr );
     ok( !ret, "HeapValidate succeeded\n" );
@@ -3725,9 +3721,23 @@ static void test_heap_size( SIZE_T initial_size )
 
 static void test_heap_sizes(void)
 {
+    unsigned int i;
+    SIZE_T size, round_size = 0x400 * sizeof(void*);
+    char *base;
+
     test_heap_size( 0 );
     test_heap_size( 0x80000 );
     test_heap_size( 0x150000 );
+
+    for (i = 1; i < 0x100; i++)
+    {
+        HANDLE heap = HeapCreate( 0, i * 0x100, i * 0x100 );
+        ok( heap != NULL, "%x: creation failed\n", i * 0x100 );
+        get_valloc_info( heap, &base, &size );
+        ok( size == ((i * 0x100 + round_size - 1) & ~(round_size - 1)),
+            "%x: wrong size %Ix\n", i * 0x100, size );
+        HeapDestroy( heap );
+    }
 }
 
 START_TEST(heap)

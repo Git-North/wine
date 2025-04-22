@@ -654,13 +654,13 @@ static NTSTATUS acquire_credentials_handle( void *args )
         cred_usage = GSS_C_ACCEPT;
         break;
 
+    case SECPKG_CRED_BOTH:
     case SECPKG_CRED_OUTBOUND:
         if ((status = init_creds( params->username, params->password )) != STATUS_SUCCESS) return status;
-        cred_usage = GSS_C_INITIATE;
+        cred_usage = params->credential_use == SECPKG_CRED_OUTBOUND ? GSS_C_INITIATE : GSS_C_BOTH;
         break;
 
     default:
-        FIXME( "SECPKG_CRED_BOTH not supported\n" );
         return SEC_E_UNKNOWN_CREDENTIALS;
     }
 
@@ -763,6 +763,7 @@ static NTSTATUS initialize_context( void *args )
             TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, (unsigned int)*params->output_token_length);
             pgss_release_buffer( &minor_status, &output_token );
             pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
+            if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );
             return SEC_E_INCOMPLETE_MESSAGE;
         }
         *params->output_token_length = output_token.length;
@@ -803,8 +804,8 @@ static NTSTATUS make_signature( void *args )
     return status_gss_to_sspi( ret );
 }
 
-#define KERBEROS_MAX_SIGNATURE        37
-#define KERBEROS_SECURITY_TRAILER     49
+#define KERBEROS_MAX_SIGNATURE        64
+#define KERBEROS_SECURITY_TRAILER     64
 #define KERBEROS_MAX_SIGNATURE_DCE    28
 #define KERBEROS_SECURITY_TRAILER_DCE 76
 
@@ -869,7 +870,7 @@ static NTSTATUS query_context_attributes( void *args )
         }
         sizes->cbMaxToken        = KERBEROS_MAX_BUF;
         sizes->cbMaxSignature    = size_max_signature;
-        sizes->cbBlockSize       = 1;
+        sizes->cbBlockSize       = 8;
         sizes->cbSecurityTrailer = size_security_trailer;
         return SEC_E_OK;
     }
@@ -1072,7 +1073,7 @@ static NTSTATUS process_attach( void *args )
     return STATUS_DLL_NOT_FOUND;
 }
 
-unixlib_entry_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     process_attach,
     accept_context,
@@ -1087,6 +1088,8 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     unseal_message,
     verify_signature,
 };
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 
 #ifdef _WIN64
 
@@ -1392,7 +1395,7 @@ static NTSTATUS wow64_verify_signature( void *args )
     return verify_signature( &params );
 }
 
-unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     process_attach,
     wow64_accept_context,
@@ -1407,6 +1410,8 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_unseal_message,
     wow64_verify_signature,
 };
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
 
 #endif /* _WIN64 */
 

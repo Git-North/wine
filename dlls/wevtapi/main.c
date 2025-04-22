@@ -141,3 +141,17 @@ BOOL WINAPI EvtExportLog(EVT_HANDLE session, const WCHAR *path, const WCHAR *que
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+EVT_HANDLE WINAPI EvtCreateBookmark(const WCHAR *bookmark_xml)
+{
+    FIXME("(%s) stub!\n", debugstr_w(bookmark_xml));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}
+
+EVT_HANDLE WINAPI EvtCreateRenderContext(DWORD pathcount, const WCHAR **paths, DWORD flags)
+{
+    FIXME("(%lu %p %#lx) stub!\n", pathcount, paths, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
+}

@@ -25,7 +25,6 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
-#include "wine/heap.h"
 
 #define COBJMACROS
 #include "windef.h"
@@ -152,23 +151,6 @@ struct bwriter_shader
     struct instruction      **instr;
     unsigned int            num_instrs, instr_alloc_size;
 };
-
-static inline void *d3dcompiler_alloc(SIZE_T size)
-{
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
-}
-
-static inline void *d3dcompiler_realloc(void *ptr, SIZE_T size)
-{
-    if (!ptr)
-        return d3dcompiler_alloc(size);
-    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
-}
-
-static inline BOOL d3dcompiler_free(void *ptr)
-{
-    return HeapFree(GetProcessHeap(), 0, ptr);
-}
 
 struct asm_parser;
 
@@ -541,6 +523,7 @@ void SlDeleteShader(struct bwriter_shader *shader);
     ((DWORD)(ch2) << 16) | ((DWORD)(ch3) << 24 ))
 #define TAG_Aon9 MAKE_TAG('A', 'o', 'n', '9')
 #define TAG_DXBC MAKE_TAG('D', 'X', 'B', 'C')
+#define TAG_FX10 MAKE_TAG('F', 'X', '1', '0')
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_OSG5 MAKE_TAG('O', 'S', 'G', '5')

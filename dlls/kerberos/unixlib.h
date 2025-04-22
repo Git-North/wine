@@ -21,7 +21,7 @@
 
 #include "wine/unixlib.h"
 
-#define KERBEROS_MAX_BUF 12000
+#define KERBEROS_MAX_BUF 48000
 
 struct accept_context_params
 {
@@ -137,6 +137,7 @@ enum unix_funcs
     unix_seal_message,
     unix_unseal_message,
     unix_verify_signature,
+    unix_funcs_count,
 };
 
 #define KRB5_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )

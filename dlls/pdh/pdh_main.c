@@ -97,7 +97,8 @@ static struct counter *create_counter( void )
 
 static void destroy_counter( struct counter *counter )
 {
-    counter->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory( &counter->magic, sizeof( counter->magic ) );
     free( counter->path );
     free( counter );
 }
@@ -130,7 +131,8 @@ static struct query *create_query( void )
 
 static void destroy_query( struct query *query )
 {
-    query->magic = 0;
+    /* Ensure compiler doesn't optimize out the assignment with 0. */
+    SecureZeroMemory( &query->magic, sizeof( query->magic ) );
     free( query );
 }
 
@@ -1276,5 +1278,14 @@ PDH_STATUS WINAPI PdhBindInputDataSourceA(PDH_HLOG *source, const char *filename
 PDH_STATUS WINAPI PdhBindInputDataSourceW(PDH_HLOG *source, const WCHAR *filenamelist)
 {
     FIXME("%p %s: stub\n", source, debugstr_w(filenamelist));
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhConnectMachineA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhConnectMachineA(const char *name)
+{
+    FIXME("%s: stub\n", debugstr_a(name));
     return PDH_NOT_IMPLEMENTED;
 }
